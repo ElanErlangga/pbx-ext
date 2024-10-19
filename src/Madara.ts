@@ -20,17 +20,17 @@ import {
     HomeSectionType
 } from '@paperback/types'
 
+import * as cheerio from 'cheerio'
+
 import { Parser } from './MadaraParser'
 import { URLBuilder } from './MadaraHelper'
 
-const BASE_VERSION = '1.0.0'
+const BASE_VERSION = '3.2.1'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
 
 export abstract class Madara implements SearchResultsProviding, MangaProviding, ChapterProviding, HomePageSectionsProviding {
-
-    constructor(public cheerio: CheerioAPI) { }
 
     /**
      *  Request manager override
@@ -65,7 +65,7 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
                 return response
             }
         }
-    });
+    })
 
 
     stateManager = App.createSourceStateManager()
@@ -151,8 +151,12 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
 
     /**
      * Some sites use the alternate URL for getting chapters through ajax
+     * 0: (POST) Form data https://domain.com/wp-admin/admin-ajax.php
+     * 1: (POST) Alternative Ajax page (https://domain.com/manga/manga-slug/ajax/chapters)
+     * 2: (POST) Manga page (https://domain.com/manga/manga-slug)
+     * 3: (GET) Manga page (https://domain.com/manga/manga-slug)
      */
-    alternativeChapterAjaxEndpoint = false
+    chapterEndpoint = 0
 
     /**
      * Different Madara sources might have a slightly different selector which is required to parse out
@@ -195,40 +199,76 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
 
         const response = await this.requestManager.schedule(request, 1)
         this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
 
         return this.parser.parseMangaDetails($, mangaId, this)
     }
 
     async getChapters(mangaId: string): Promise<Chapter[]> {
-        let endpoint: string
+        let requestConfig
+        let path = this.directoryPath
+        let slug = mangaId
 
-        if (this.alternativeChapterAjaxEndpoint) {
-            if (this.usePostIds) {
-                const slugData: any = await this.convertPostIdToSlug(Number(mangaId))
-                endpoint = `${this.baseUrl}/${slugData.path}/${slugData.slug}/ajax/chapters`
-            } else {
-                endpoint = `${this.baseUrl}/${this.directoryPath}/${mangaId}/ajax/chapters`
-            }
-        } else {
-            endpoint = `${this.baseUrl}/wp-admin/admin-ajax.php`
+        if (this.usePostIds) {
+            const postData = await this.convertPostIdToSlug(Number(mangaId))
+            path = postData.path
+            slug = postData.slug
         }
 
-        const request = App.createRequest({
-            url: endpoint,
-            method: 'POST',
-            headers: {
-                'content-type': 'application/x-www-form-urlencoded'
-            },
-            data: {
-                'action': 'manga_get_chapters',
-                'manga': this.usePostIds ? mangaId : await this.convertSlugToPostId(mangaId, this.directoryPath)
-            }
-        })
+        switch (this.chapterEndpoint) {
+            case 0:
+                requestConfig = {
+                    url: `${this.baseUrl}/wp-admin/admin-ajax.php`,
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    },
+                    data: {
+                        'action': 'manga_get_chapters',
+                        'manga': this.usePostIds ? mangaId : await this.convertSlugToPostId(mangaId, this.directoryPath)
+                    }
+                }
+                break
+
+            case 1:
+                requestConfig = {
+                    url: `${this.baseUrl}/${path}/${slug}/ajax/chapters`,
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    }
+                }
+                break
+
+            case 2:
+                requestConfig = {
+                    url: `${this.baseUrl}/${path}/${slug}`,
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    }
+                }
+                break
+
+            case 3:
+                requestConfig = {
+                    url: `${this.baseUrl}/${path}/${slug}`,
+                    method: 'GET',
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    }
+                }
+                break
+
+            default:
+                throw new Error('Invalid chapter endpoint!')
+        }
+
+        const request = App.createRequest(requestConfig)
 
         const response = await this.requestManager.schedule(request, 1)
         this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
 
         return this.parser.parseChapterList($, mangaId, this)
     }
@@ -250,7 +290,7 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
 
         const response = await this.requestManager.schedule(request, 1)
         this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
 
         if (this.hasProtectedChapters) {
             return this.parser.parseProtectedChapterDetails($, mangaId, chapterId, this.protectedChapterDataSelector, this)
@@ -276,7 +316,7 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
 
         const response = await this.requestManager.schedule(request, 1)
         this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
 
         return this.parser.parseTags($, this.hasAdvancedSearchPage)
     }
@@ -288,7 +328,7 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
         const request = this.constructSearchRequest(page, query)
         const response = await this.requestManager.schedule(request, 1)
         this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
         const results = await this.parser.parseSearchResults($, this)
 
         const manga: PartialSourceManga[] = []
@@ -367,7 +407,7 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
             promises.push(
                 this.requestManager.schedule(section.request, 1).then(async response => {
                     this.checkResponseError(response)
-                    const $ = this.cheerio.load(response.data as string)
+                    const $ = cheerio.load(response.data as string)
                     section.section.items = await this.parser.parseHomeSection($, this)
                     sectionCallback(section.section)
                 })
@@ -405,7 +445,7 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
         const request = this.constructAjaxHomepageRequest(page, 50, sortBy[0], sortBy[1])
         const response = await this.requestManager.schedule(request, 1)
         this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
         const items: PartialSourceManga[] = await this.parser.parseHomeSection($, this)
 
         let mData: any = { page: (page + 1) }
@@ -475,14 +515,14 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
         return postId
     }
 
-    async convertPostIdToSlug(postId: number): Promise<any> {
+    async convertPostIdToSlug(postId: number) {
         const request = App.createRequest({
             url: `${this.baseUrl}/?p=${postId}`,
             method: 'GET'
         })
 
         const response = await this.requestManager.schedule(request, 1)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
 
         let parseSlug: any
         // Step 1: Try to get slug from og-url
@@ -530,7 +570,7 @@ export abstract class Madara implements SearchResultsProviding, MangaProviding, 
         })
 
         const response = await this.requestManager.schedule(request, 1)
-        const $ = this.cheerio.load(response.data as string)
+        const $ = cheerio.load(response.data as string)
 
         // Step 1: Try to get postId from shortlink
         postId = Number($('link[rel="shortlink"]')?.attr('href')?.split('/?p=')[1])

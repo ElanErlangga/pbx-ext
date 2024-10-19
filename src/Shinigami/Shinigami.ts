@@ -34,7 +34,7 @@ export const ShinigamiInfo: SourceInfo = {
 export class Shinigami extends Madara {
   baseUrl: string = DOMAIN;
 
-  override alternativeChapterAjaxEndpoint = true;
+  override chapterEndpoint = 1;
 
   override hasAdvancedSearchPage = true;
 

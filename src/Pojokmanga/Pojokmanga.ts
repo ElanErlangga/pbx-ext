@@ -34,7 +34,7 @@ export const PojokmangaInfo: SourceInfo = {
 export class Pojokmanga extends Madara {
   baseUrl: string = DOMAIN;
 
-  override alternativeChapterAjaxEndpoint = true;
+  override chapterEndpoint = 1;
 
   override hasAdvancedSearchPage = true;
 
