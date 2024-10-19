@@ -9,6 +9,9 @@ jobs:
     name: Bundle and Publish Sources
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     strategy:
       matrix:
         node-version: [20.x] 
