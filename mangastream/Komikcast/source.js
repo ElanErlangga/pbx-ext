@@ -2283,10 +2283,212 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
     }
   };
 
+  // src/Komikcast/KomikcastParser.ts
+  var KomikcastParser = class extends MangaStreamParser {
+    constructor() {
+      super(...arguments);
+      this.parseChapterDetails = ($, mangaId, chapterId) => {
+        const pages = [];
+        for (const img of $("img", ".main-reading-area").toArray()) {
+          let image = $(img).attr("src") ?? "";
+          if (!image)
+            image = $(img).attr("data-src") ?? "";
+          if (!image)
+            throw new Error(`Unable to parse image(s) for Chapter ID: ${chapterId}`);
+          pages.push(image);
+        }
+        const chapterDetails = App.createChapterDetails({
+          id: chapterId,
+          mangaId,
+          pages
+        });
+        return chapterDetails;
+      };
+      this.isLastPage = ($, id) => {
+        let isLast = true;
+        if (id == "view_more") {
+          const hasNext = Boolean($("a.next.page-numbers")[0]);
+          if (hasNext) {
+            isLast = false;
+          }
+        }
+        if (id == "search_request") {
+          const hasNext = Boolean($("a.next.page-numbers")[0]);
+          if (hasNext) {
+            isLast = false;
+          }
+        }
+        return isLast;
+      };
+    }
+    parseMangaDetails($, mangaId, source) {
+      const titles = [];
+      titles.push(this.decodeHTMLEntity($("h1.komik_info-content-body-title").text().trim().replace(/Komik|Manhwa|Manga|Manhua|Bahasa Indonesia/g, "")));
+      const altTitles = $(`span:contains(${source.manga_selector_AlternativeTitles}), b:contains(${source.manga_selector_AlternativeTitles})+span, .imptdt:contains(${source.manga_selector_AlternativeTitles}) i, h1.entry-title+span`).contents().remove().last().text().split(",");
+      for (const title of altTitles) {
+        if (title == "") {
+          continue;
+        }
+        titles.push(this.decodeHTMLEntity(title.trim()));
+      }
+      const author = $(`.komik_info-content-info:contains(${source.manga_selector_author})`).contents().remove().last().text().trim();
+      const artist = $(`span:contains(${source.manga_selector_artist}), .fmed b:contains(${source.manga_selector_artist})+span, td:contains(${source.manga_selector_artist})+td, .imptdt:contains(${source.manga_selector_artist}) i`).contents().remove().last().text().trim();
+      const image = this.getImageSrc($("img", 'div[itemprop="image"]'));
+      const description = this.decodeHTMLEntity($('div[itemprop="articleBody"]  p').text().trim());
+      const arrayTags = [];
+      for (const tag of $("a", "span.komik_info-content-genre").toArray()) {
+        const label = $(tag).text().trim();
+        const id = this.idCleaner($(tag).attr("href") ?? "");
+        if (!id || !label) {
+          continue;
+        }
+        arrayTags.push({ id, label });
+      }
+      const rawStatus = $(`.komik_info-content-info b:contains(${source.manga_selector_status})`).contents().remove().last().text().trim();
+      let status;
+      switch (rawStatus.toLowerCase()) {
+        case source.manga_StatusTypes.ONGOING.toLowerCase():
+          status = "Ongoing";
+          break;
+        case source.manga_StatusTypes.COMPLETED.toLowerCase():
+          status = "Completed";
+          break;
+        default:
+          status = "Ongoing";
+          break;
+      }
+      const tagSections = [
+        App.createTagSection({
+          id: "0",
+          label: "genres",
+          tags: arrayTags.map((x) => App.createTag(x))
+        })
+      ];
+      return App.createSourceManga({
+        id: mangaId,
+        mangaInfo: App.createMangaInfo({
+          titles,
+          image,
+          status,
+          author: author == "" ? "Unknown" : author,
+          artist: artist == "" ? "Unknown" : artist,
+          tags: tagSections,
+          desc: description
+        })
+      });
+    }
+    parseChapterList($, mangaId, source) {
+      const chapters = [];
+      let sortingIndex = 0;
+      let language = source.language;
+      if (mangaId.toUpperCase().endsWith("-RAW") && source.language == "\u{1F1EC}\u{1F1E7}") language = "\u{1F1EE}\u{1F1E9}";
+      for (const chapter of $("li", "div.komik_info-chapters").toArray()) {
+        const title = $("a.chapter-link-item", chapter).text().trim();
+        const date = convertDate($("div.chapter-link-time", chapter).text().trim(), source);
+        const id = title.replace("Chapter", "") ?? "";
+        const chapterNumberRegex = id.match(/(\d+\.?\d?)+/);
+        let chapterNumber = 0;
+        if (chapterNumberRegex && chapterNumberRegex[1]) {
+          chapterNumber = Number(chapterNumberRegex[1]);
+        }
+        if (!id || typeof id === "undefined") {
+          throw new Error(`Could not parse out ID when getting chapters for postId:${mangaId}`);
+        }
+        chapters.push({
+          id,
+          // Store chapterNumber as id
+          langCode: language,
+          chapNum: chapterNumber,
+          name: title,
+          time: date,
+          sortingIndex,
+          volume: 0,
+          group: ""
+        });
+        sortingIndex--;
+      }
+      if (chapters.length == 0) {
+        throw new Error(`Couldn't find any chapters for mangaId: ${mangaId}!`);
+      }
+      return chapters.map((chapter) => {
+        chapter.sortingIndex += chapters.length;
+        return App.createChapter(chapter);
+      });
+    }
+    parseTags($) {
+      const tagSections = [
+        { id: "0", label: "genres", tags: [] },
+        { id: "1", label: "status", tags: [] },
+        { id: "2", label: "type", tags: [] },
+        { id: "3", label: "order", tags: [] }
+      ];
+      const sectionDropDowns = $("ul.komiklist_dropdown-menu genrez").toArray();
+      for (let i = 0; i < 4; ++i) {
+        const sectionDropdown = sectionDropDowns[i];
+        if (!sectionDropdown) {
+          continue;
+        }
+        for (const tag of $("li", sectionDropdown).toArray()) {
+          const label = $("label", tag).text().trim();
+          const id = `${tagSections[i].label}:${$("input", tag).attr("value")}`;
+          if (!id || !label) {
+            continue;
+          }
+          tagSections[i].tags.push(App.createTag({ id, label }));
+        }
+      }
+      return tagSections.map((x) => App.createTagSection(x));
+    }
+    async parseSearchResults($, source) {
+      const results = [];
+      for (const obj of $("div.list-update_item", "div.list-update_items-wrapper").toArray()) {
+        const slug = ($("a", obj).attr("href") ?? "").replace(/\/$/, "").split("/").pop() ?? "";
+        const path = ($("a", obj).attr("href") ?? "").replace(/\/$/, "").split("/").slice(-2).shift() ?? "";
+        if (!slug || !path) {
+          throw new Error(`Unable to parse slug (${slug}) or path (${path})!`);
+        }
+        const title = $("h3.title", obj).text() ?? "";
+        const image = this.getImageSrc($("img", obj)) ?? "";
+        const subtitle = $("div.chapter", obj).text().trim();
+        results.push({
+          slug,
+          path,
+          image: image || source.fallbackImage,
+          title: this.decodeHTMLEntity(title),
+          subtitle: this.decodeHTMLEntity(subtitle)
+        });
+      }
+      return results;
+    }
+    async parseViewMore($, source) {
+      const items = [];
+      for (const manga of $("div.list-update_item", "div.list-update_items-wrapper").toArray()) {
+        const title = $("h3.title", manga).text();
+        const image = this.getImageSrc($("img", manga)) ?? "";
+        const subtitle = $("div.chapter", manga).text().trim();
+        const slug = this.idCleaner($("a", manga).attr("href") ?? "");
+        const path = ($("a", manga).attr("href") ?? "").replace(/\/$/, "").split("/").slice(-2).shift() ?? "";
+        const postId = $("a", manga).attr("rel");
+        const mangaId = await source.getUsePostIds() ? isNaN(Number(postId)) ? await source.slugToPostId(slug, path) : postId : slug;
+        if (!mangaId || !title) {
+          console.log(`Failed to parse homepage sections for ${source.baseUrl}`);
+          continue;
+        }
+        items.push(App.createPartialSourceManga({
+          mangaId,
+          image,
+          title: this.decodeHTMLEntity(title),
+          subtitle: this.decodeHTMLEntity(subtitle)
+        }));
+      }
+      return items;
+    }
+  };
+
   // src/Komikcast/Komikcast.ts
-  var DOMAIN = "https://komikcast.cz";
+  var DOMAIN = "https://komikcast.vip";
   var KomikcastInfo = {
-    version: getExportVersion("0.0.3"),
+    version: getExportVersion("0.0.4"),
     name: "Komikcast",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "ElanErlangga",
@@ -2308,6 +2510,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       this.baseUrl = DOMAIN;
       this.directoryPath = "komik";
       this.usePostIds = false;
+      this.parser = new KomikcastParser();
     }
     configureSections() {
       this.homescreen_sections["popular_today"].selectorFunc = ($) => $("div.swiper-slide", $("span:contains(Hot Komik Update)")?.parent()?.next());
@@ -2322,6 +2525,80 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       this.homescreen_sections["top_alltime"].enabled = false;
       this.homescreen_sections["top_monthly"].enabled = false;
       this.homescreen_sections["top_weekly"].enabled = false;
+    }
+    async getChapterDetails(mangaId, chapterId) {
+      const request = App.createRequest({
+        url: await this.getUsePostIds() ? `${this.baseUrl}/?p=${mangaId}/` : `${this.baseUrl}/${this.directoryPath}/${mangaId}/`,
+        method: "GET"
+      });
+      const response = await this.requestManager.schedule(request, 1);
+      this.checkResponseError(response);
+      const $ = this.cheerio.load(response.data);
+      const chapter = $("li", "div.komik_info-chapters");
+      if (!chapter) {
+        throw new Error(`Unable to fetch a chapter for chapter numer: ${chapterId}`);
+      }
+      const id = $("a", chapter).attr("href") ?? "";
+      if (!id) {
+        throw new Error(`Unable to fetch id for chapter numer: ${chapterId}`);
+      }
+      const _request = App.createRequest({
+        url: id,
+        method: "GET"
+      });
+      const _response = await this.requestManager.schedule(_request, 1);
+      this.checkResponseError(_response);
+      const _$ = this.cheerio.load(_response.data);
+      return this.parser.parseChapterDetails(_$, mangaId, chapterId);
+    }
+    async getSearchTags() {
+      const request = App.createRequest({
+        url: `${this.baseUrl}/`,
+        method: "GET",
+        param: `${this.directoryPath}/`
+      });
+      const response = await this.requestManager.schedule(request, 1);
+      this.checkResponseError(response);
+      const $ = this.cheerio.load(response.data);
+      return this.parser.parseTags($);
+    }
+    async getSearchResults(query, metadata) {
+      const page = metadata?.page ?? 1;
+      const request = await this.constructSearchRequest(page, query);
+      const response = await this.requestManager.schedule(request, 1);
+      this.checkResponseError(response);
+      const $ = this.cheerio.load(response.data);
+      const results = await this.parser.parseSearchResults($, this);
+      const manga = [];
+      for (const result of results) {
+        let mangaId = result.slug;
+        if (await this.getUsePostIds()) {
+          mangaId = await this.slugToPostId(result.slug, result.path);
+        }
+        manga.push(App.createPartialSourceManga({
+          mangaId,
+          image: result.image,
+          title: result.title,
+          subtitle: result.subtitle
+        }));
+      }
+      metadata = !this.parser.isLastPage($, "view_more") ? { page: page + 1 } : void 0;
+      return App.createPagedResults({
+        results: manga,
+        metadata
+      });
+    }
+    async constructSearchRequest(page, query) {
+      let urlBuilder = new URLBuilder(this.baseUrl).addPathComponent(this.directoryPath).addQueryParameter("page", page.toString());
+      if (query?.title) {
+        urlBuilder = urlBuilder.addQueryParameter("s", encodeURIComponent(query?.title.replace(/[’–][a-z]*/g, "") ?? ""));
+      } else {
+        urlBuilder = urlBuilder.addQueryParameter("genre", getFilterTagsBySection("genres", query?.includedTags, true)).addQueryParameter("genre", getFilterTagsBySection("genres", query?.excludedTags, false, await this.supportsTagExclusion())).addQueryParameter("status", getIncludedTagBySection("status", query?.includedTags)).addQueryParameter("type", getIncludedTagBySection("type", query?.includedTags)).addQueryParameter("order", getIncludedTagBySection("order", query?.includedTags));
+      }
+      return App.createRequest({
+        url: urlBuilder.buildUrl({ addTrailingSlash: true, includeUndefinedParameters: false }),
+        method: "GET"
+      });
     }
   };
   return __toCommonJS(Komikcast_exports);
