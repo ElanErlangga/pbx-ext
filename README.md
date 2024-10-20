@@ -4,15 +4,11 @@ Cloned from [TheNetsky Repo](https://github.com/TheNetsky)
 
 Sources:
 
-- Kanzenin (18+)
 - Kiryuu
 - Komikcast
 - KomikIndo
-- KomikIndo.Top (18+)
-- KomikTap (18+)
-- Komiku.com
-- Mangatale.co
 - Mangasusu (18+)
+- Tenshi
 - Pojokmanga
 - Shinigami
 
