@@ -2323,11 +2323,11 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   // src/Komikcast/Komikcast.ts
   var DOMAIN = "https://komikcast.cz";
   var KomikcastInfo = {
-    version: getExportVersion("0.0.6"),
-    name: "SkyMangas",
+    version: getExportVersion("0.0.7"),
+    name: "Komikcast",
     description: `Extension that pulls manga from ${DOMAIN}`,
-    author: "Netsky",
-    authorWebsite: "http://github.com/TheNetsky",
+    author: "ElanErlangga",
+    authorWebsite: "http://github.com/ElanEralngga",
     icon: "icon.png",
     contentRating: import_types3.ContentRating.MATURE,
     websiteBaseURL: DOMAIN,
