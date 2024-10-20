@@ -20,11 +20,11 @@ import { KomikcastParser } from './KomikcastParser'
 const DOMAIN = 'https://komikcast.cz'
 
 export const KomikcastInfo: SourceInfo = {
-    version: getExportVersion('0.0.6'),
-    name: 'SkyMangas',
+    version: getExportVersion('0.0.7'),
+    name: 'Komikcast',
     description: `Extension that pulls manga from ${DOMAIN}`,
-    author: 'Netsky',
-    authorWebsite: 'http://github.com/TheNetsky',
+    author: 'ElanErlangga',
+    authorWebsite: 'http://github.com/ElanEralngga',
     icon: 'icon.png',
     contentRating: ContentRating.MATURE,
     websiteBaseURL: DOMAIN,
