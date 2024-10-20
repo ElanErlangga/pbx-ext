@@ -2486,9 +2486,9 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   };
 
   // src/Komikcast/Komikcast.ts
-  var DOMAIN = "https://komikcast.vip";
+  var DOMAIN = "https://komikcast.cz";
   var KomikcastInfo = {
-    version: getExportVersion("0.0.4"),
+    version: getExportVersion("0.0.5"),
     name: "Komikcast",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "ElanErlangga",
