@@ -1,13 +1,8 @@
 import {
     BadgeColor,
-    ChapterDetails,
     ContentRating,
-    PagedResults,
-    PartialSourceManga,
-    SearchRequest,
     SourceInfo,
-    SourceIntents,
-    TagSection
+    SourceIntents
 } from '@paperback/types'
 
 import {
@@ -16,30 +11,29 @@ import {
 } from '../MangaStream'
 
 import {
-    getFilterTagsBySection,
-    getIncludedTagBySection
+    createHomeSection,
+    DefaultHomeSectionData
 } from '../MangaStreamHelper'
 
 import { KomikcastParser } from './KomikcastParser'
-import { URLBuilder } from '../UrlBuilder'
 
 const DOMAIN = 'https://komikcast.cz'
 
 export const KomikcastInfo: SourceInfo = {
-    version: getExportVersion('0.0.5'),
-    name: 'Komikcast',
+    version: getExportVersion('0.0.6'),
+    name: 'SkyMangas',
     description: `Extension that pulls manga from ${DOMAIN}`,
-    author: 'ElanErlangga',
-    authorWebsite: 'http://github.com/ElanErlangga',
+    author: 'Netsky',
+    authorWebsite: 'http://github.com/TheNetsky',
     icon: 'icon.png',
     contentRating: ContentRating.MATURE,
     websiteBaseURL: DOMAIN,
     intents: SourceIntents.MANGA_CHAPTERS | SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.CLOUDFLARE_BYPASS_REQUIRED | SourceIntents.SETTINGS_UI,
     sourceTags: [
         {
-            text: "Indonesia",
+            text: 'Spanish',
             type: BadgeColor.GREY
-        },
+        }
     ]
 }
 
@@ -47,126 +41,46 @@ export class Komikcast extends MangaStream {
 
     baseUrl: string = DOMAIN
 
-    override directoryPath = 'komik'
-
-    override usePostIds = false
-
     override parser = new KomikcastParser()
 
+    //----DATE SETTINGS
+    override dateMonths = {
+        january: 'enero',
+        february: 'febrero',
+        march: 'marzo',
+        april: 'abril',
+        may: 'mayo',
+        june: 'junio',
+        july: 'julio',
+        august: 'agosto',
+        september: 'septiembre',
+        october: 'octubre',
+        november: 'noviembre',
+        december: 'diciembre'
+    }
+
+    //----MANGA DETAILS SELECTORS
+    override manga_selector_author = 'Autor'
+    override manga_selector_artist = 'Artista'
+    override manga_selector_status = 'Estado'
+
     override configureSections() {
-        this.homescreen_sections['popular_today'].selectorFunc = ($: CheerioStatic) => $('div.swiper-slide', $('span:contains(Hot Komik Update)')?.parent()?.next())
-        this.homescreen_sections['popular_today'].titleSelectorFunc = ($: CheerioStatic) => $('div.title').text().trim()
-        this.homescreen_sections['popular_today'].subtitleSelectorFunc = ($: CheerioStatic, element: CheerioElement) => $('div.chapter', element).text().trim()
-        this.homescreen_sections['popular_today'].getViewMoreItemsFunc = (page: string) => `daftar-komik/page/${page}/?orderby=popular`
-        this.homescreen_sections['latest_update'].selectorFunc = ($: CheerioStatic) => $('div.utao', $('span:contains(Rilisan Terbaru)')?.parent()?.next())
-        this.homescreen_sections['latest_update'].titleSelectorFunc = ($: CheerioStatic) => $('h3').text().trim()
-        this.homescreen_sections['latest_update'].subtitleSelectorFunc = ($: CheerioStatic, element: CheerioElement) => $('div.chapter', element).text().trim()
-        this.homescreen_sections['latest_update'].getViewMoreItemsFunc = (page: string) => `daftar-komik/page/${page}/?sortby=update`
+        this.homescreen_sections['popular_today'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Popular Today)')?.parent()?.next())
+        this.homescreen_sections['latest_update'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Latest Update)')?.parent()?.next())
         this.homescreen_sections['new_titles'].enabled = false
         this.homescreen_sections['top_alltime'].enabled = false
         this.homescreen_sections['top_monthly'].enabled = false
         this.homescreen_sections['top_weekly'].enabled = false
 
-    }
-
-    override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
-        // Request the manga page
-        const request = App.createRequest({
-            url: await this.getUsePostIds() ? `${this.baseUrl}/?p=${mangaId}/` : `${this.baseUrl}/${this.directoryPath}/${mangaId}/`,
-            method: 'GET'
-        })
-
-        const response = await this.requestManager.schedule(request, 1)
-        this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
-
-        const chapter = $('li', 'div.komik_info-chapters')
-        if (!chapter) {
-            throw new Error(`Unable to fetch a chapter for chapter numer: ${chapterId}`)
+        //@ts-ignore
+        this.homescreen_sections['project_updates'] = {
+            ...DefaultHomeSectionData,
+            section: createHomeSection('project_updates', 'Project Updates', true),
+            selectorFunc: ($: CheerioStatic) => $('div.bsx', $('h2:contains(Project Update)')?.parent()?.next()),
+            titleSelectorFunc: ($: CheerioStatic, element: CheerioElement) => $('a', element).attr('title'),
+            subtitleSelectorFunc: ($: CheerioStatic, element: CheerioElement) => $('div.epxs', element).text().trim(),
+            getViewMoreItemsFunc: (page: string) => `project/page/${page}`,
+            sortIndex: 11
         }
-
-        // Fetch the ID (URL) of the chapter
-        const id = $('a', chapter).attr('href') ?? ''
-        if (!id) {
-            throw new Error(`Unable to fetch id for chapter numer: ${chapterId}`)
-        }
-        // Request the chapter page
-        const _request = App.createRequest({
-            url: id,
-            method: 'GET'
-        })
-
-        const _response = await this.requestManager.schedule(_request, 1)
-        this.checkResponseError(_response)
-        const _$ = this.cheerio.load(_response.data as string)
-
-        return this.parser.parseChapterDetails(_$, mangaId, chapterId)
-    }
-
-    override async getSearchTags(): Promise<TagSection[]> {
-        const request = App.createRequest({
-            url: `${this.baseUrl}/`,
-            method: 'GET',
-            param: `${this.directoryPath}/`
-        })
-
-        const response = await this.requestManager.schedule(request, 1)
-        this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
-
-        return this.parser.parseTags($)
-    }
-
-    override async getSearchResults(query: SearchRequest, metadata: any): Promise<PagedResults> {
-        const page: number = metadata?.page ?? 1
-    
-        const request = await this.constructSearchRequest(page, query)
-        const response = await this.requestManager.schedule(request, 1)
-        this.checkResponseError(response)
-        const $ = this.cheerio.load(response.data as string)
-        const results = await this.parser.parseSearchResults($, this)
-    
-        const manga: PartialSourceManga[] = []
-        for (const result of results) {
-            let mangaId: string = result.slug
-            if (await this.getUsePostIds()) {
-                mangaId = await this.slugToPostId(result.slug, result.path)
-            }
-    
-            manga.push(App.createPartialSourceManga({
-                mangaId,
-                image: result.image,
-                title: result.title,
-                subtitle: result.subtitle
-            }))
-        }
-    
-        metadata = !this.parser.isLastPage($, 'view_more') ? { page: page + 1 } : undefined
-        return App.createPagedResults({
-            results: manga,
-            metadata
-        })
-    }
-    
-    override async constructSearchRequest(page: number, query: SearchRequest): Promise<any> {
-        let urlBuilder: URLBuilder = new URLBuilder(this.baseUrl)
-            .addPathComponent(this.directoryPath)
-            .addQueryParameter('page', page.toString())
-
-        if (query?.title) {
-            urlBuilder = urlBuilder.addQueryParameter('s', encodeURIComponent(query?.title.replace(/[’–][a-z]*/g, '') ?? ''))
-        } else {
-            urlBuilder = urlBuilder
-                .addQueryParameter('genre', getFilterTagsBySection('genres', query?.includedTags, true))
-                .addQueryParameter('genre', getFilterTagsBySection('genres', query?.excludedTags, false, await this.supportsTagExclusion()))
-                .addQueryParameter('status', getIncludedTagBySection('status', query?.includedTags))
-                .addQueryParameter('type', getIncludedTagBySection('type', query?.includedTags))
-                .addQueryParameter('order', getIncludedTagBySection('order', query?.includedTags))
-        }
-
-        return App.createRequest({
-            url: urlBuilder.buildUrl({ addTrailingSlash: true, includeUndefinedParameters: false }),
-            method: 'GET'
-        })
     }
 }
