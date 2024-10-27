@@ -13,7 +13,7 @@ import {
 const DOMAIN = 'https://komikstation.co'
 
 export const KomikStationInfo: SourceInfo = {
-    version: getExportVersion('0.0.1'),
+    version: getExportVersion('0.0.2'),
     name: 'KomikStation',
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: 'ElanErlangga',
@@ -39,8 +39,8 @@ export class KomikStation extends MangaStream {
         this.homescreen_sections['top_alltime'].enabled = false
         this.homescreen_sections['top_monthly'].enabled = false
         this.homescreen_sections['top_weekly'].enabled = false
-        this.homescreen_sections['popular_today'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Yang Lagi Trending!)')?.parent()?.next())
-        this.homescreen_sections['latest_update'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Rilisan Terbaru)')?.parent()?.next())
-        this.homescreen_sections['latest_update'].subtitleSelectorFunc = ($: CheerioStatic, element: CheerioElement) => $('span.fivchap', element).first().text().trim()
+        // this.homescreen_sections['popular_today'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Yang Lagi Trending!)')?.parent()?.next())
+        // this.homescreen_sections['latest_update'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Rilisan Terbaru)')?.parent()?.next())
+        // this.homescreen_sections['latest_update'].subtitleSelectorFunc = ($: CheerioStatic, element: CheerioElement) => $('span.fivchap', element).first().text().trim()
     }
 }
