@@ -2286,8 +2286,8 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   // src/TukangKomik/TukangKomik.ts
   var DOMAIN = "https://tukangkomik.co";
   var TukangKomikInfo = {
-    version: getExportVersion("0.0.1"),
-    name: "Tenshi",
+    version: getExportVersion("0.0.2"),
+    name: "TukangKomik",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "ElanErlangga",
     authorWebsite: "http://github.com/ElanErlangga",

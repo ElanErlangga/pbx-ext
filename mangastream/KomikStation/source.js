@@ -2286,8 +2286,8 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   // src/KomikStation/KomikStation.ts
   var DOMAIN = "https://komikstation.co";
   var KomikStationInfo = {
-    version: getExportVersion("0.0.1"),
-    name: "Tenshi",
+    version: getExportVersion("0.0.2"),
+    name: "KomikStation",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "ElanErlangga",
     authorWebsite: "http://github.com/ElanErlangga",

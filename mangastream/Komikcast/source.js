@@ -2323,7 +2323,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   // src/Komikcast/Komikcast.ts
   var DOMAIN = "https://komikcast.cz";
   var KomikcastInfo = {
-    version: getExportVersion("0.0.7"),
+    version: getExportVersion("0.0.8"),
     name: "Komikcast",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "ElanErlangga",
@@ -2334,7 +2334,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
     intents: import_types3.SourceIntents.MANGA_CHAPTERS | import_types3.SourceIntents.HOMEPAGE_SECTIONS | import_types3.SourceIntents.CLOUDFLARE_BYPASS_REQUIRED | import_types3.SourceIntents.SETTINGS_UI,
     sourceTags: [
       {
-        text: "Spanish",
+        text: "Indonesia",
         type: import_types3.BadgeColor.GREY
       }
     ]
