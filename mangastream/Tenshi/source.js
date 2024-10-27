@@ -2306,6 +2306,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
     constructor() {
       super(...arguments);
       this.baseUrl = DOMAIN;
+      this.directoryPath = "komik";
       this.manga_tag_selector_box = "div.seriestugenre";
       this.dateMonths = {
         january: "Januari",
