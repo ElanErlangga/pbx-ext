@@ -1447,8 +1447,8 @@ var _Sources = (() => {
   // src/KomikStation/KomikStation.ts
   var KomikStation_exports = {};
   __export(KomikStation_exports, {
-    Tenshi: () => Tenshi,
-    TenshiInfo: () => TenshiInfo
+    KomikStation: () => KomikStation,
+    KomikStationInfo: () => KomikStationInfo
   });
   var import_types3 = __toESM(require_lib());
 
@@ -2285,7 +2285,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
 
   // src/KomikStation/KomikStation.ts
   var DOMAIN = "https://komikstation.co";
-  var TenshiInfo = {
+  var KomikStationInfo = {
     version: getExportVersion("0.0.1"),
     name: "Tenshi",
     description: `Extension that pulls manga from ${DOMAIN}`,
@@ -2302,7 +2302,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       }
     ]
   };
-  var Tenshi = class extends MangaStream {
+  var KomikStation = class extends MangaStream {
     constructor() {
       super(...arguments);
       this.baseUrl = DOMAIN;
