@@ -13,8 +13,8 @@ import {
 const DOMAIN = 'https://tukangkomik.co'
 
 export const TukangKomikInfo: SourceInfo = {
-    version: getExportVersion('0.0.1'),
-    name: 'Tenshi',
+    version: getExportVersion('0.0.2'),
+    name: 'TukangKomik',
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: 'ElanErlangga',
     authorWebsite: 'http://github.com/ElanErlangga',

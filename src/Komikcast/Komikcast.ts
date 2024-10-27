@@ -20,7 +20,7 @@ import { KomikcastParser } from './KomikcastParser'
 const DOMAIN = 'https://komikcast.cz'
 
 export const KomikcastInfo: SourceInfo = {
-    version: getExportVersion('0.0.7'),
+    version: getExportVersion('0.0.8'),
     name: 'Komikcast',
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: 'ElanErlangga',
@@ -31,7 +31,7 @@ export const KomikcastInfo: SourceInfo = {
     intents: SourceIntents.MANGA_CHAPTERS | SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.CLOUDFLARE_BYPASS_REQUIRED | SourceIntents.SETTINGS_UI,
     sourceTags: [
         {
-            text: 'Spanish',
+            text: 'Indonesia',
             type: BadgeColor.GREY
         }
     ]

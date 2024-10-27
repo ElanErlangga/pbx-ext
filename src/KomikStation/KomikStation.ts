@@ -13,8 +13,8 @@ import {
 const DOMAIN = 'https://komikstation.co'
 
 export const KomikStationInfo: SourceInfo = {
-    version: getExportVersion('0.0.1'),
-    name: 'Tenshi',
+    version: getExportVersion('0.0.2'),
+    name: 'KomikStation',
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: 'ElanErlangga',
     authorWebsite: 'http://github.com/ElanErlangga',
