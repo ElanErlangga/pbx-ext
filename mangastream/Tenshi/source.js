@@ -2284,7 +2284,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   };
 
   // src/Tenshi/Tenshi.ts
-  var DOMAIN = "https://tenshi.pw";
+  var DOMAIN = "https://tenshi01.id";
   var TenshiInfo = {
     version: getExportVersion("0.0.4"),
     name: "Tenshi",
