@@ -34,27 +34,7 @@ export class KomikStation extends MangaStream {
 
     baseUrl: string = DOMAIN
 
-    override configureSections(): void {
+    override configureSections() {
         this.homescreen_sections['new_titles'].enabled = false
-        this.homescreen_sections['top_alltime'].enabled = false
-        this.homescreen_sections['top_monthly'].enabled = false
-        this.homescreen_sections['top_weekly'].enabled = false
-        this.homescreen_sections['popular_today'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Terpopuler Hari Ini)')?.parent()?.next())
-        this.homescreen_sections['latest_update'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Rilisan Terbaru)')?.parent()?.next())
-        this.homescreen_sections['latest_update'].subtitleSelectorFunc = ($: CheerioStatic, element: CheerioElement) => $('span.fivchap', element).first().text().trim()
-    }
-    override dateMonths = {
-        january: 'Januari',
-        february: 'Februari',
-        march: 'Maret',
-        april: 'April',
-        may: 'Mei',
-        june: 'Juni',
-        july: 'Juli',
-        august: 'Agustus',
-        september: 'September',
-        october: 'Oktober',
-        november: 'November',
-        december: 'Desember'
     }
 }
