@@ -12,7 +12,7 @@ import {
 
 const DOMAIN = 'https://komikstation.co'
 
-export const TenshiInfo: SourceInfo = {
+export const KomikStationInfo: SourceInfo = {
     version: getExportVersion('0.0.1'),
     name: 'Tenshi',
     description: `Extension that pulls manga from ${DOMAIN}`,
@@ -30,7 +30,7 @@ export const TenshiInfo: SourceInfo = {
     ]
 }
 
-export class Tenshi extends MangaStream {
+export class KomikStation extends MangaStream {
 
     baseUrl: string = DOMAIN
 
