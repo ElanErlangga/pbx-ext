@@ -10,7 +10,7 @@ import {
     MangaStream
 } from '../MangaStream'
 
-const DOMAIN = 'https://tenshi.pw'
+const DOMAIN = 'https://tenshi01.id'
 
 export const TenshiInfo: SourceInfo = {
     version: getExportVersion('0.0.4'),
