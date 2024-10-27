@@ -34,8 +34,6 @@ export class KomikStation extends MangaStream {
 
     baseUrl: string = DOMAIN
 
-    override manga_tag_selector_box = 'div.seriestugenre'
-
     override configureSections(): void {
         this.homescreen_sections['new_titles'].enabled = false
         this.homescreen_sections['top_alltime'].enabled = false
