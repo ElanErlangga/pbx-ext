@@ -2286,7 +2286,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
   // src/KomikStation/KomikStation.ts
   var DOMAIN = "https://komikstation.co";
   var KomikStationInfo = {
-    version: getExportVersion("0.0.1"),
+    version: getExportVersion("0.0.2"),
     name: "KomikStation",
     description: `Extension that pulls manga from ${DOMAIN}`,
     author: "ElanErlangga",
@@ -2312,9 +2312,6 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       this.homescreen_sections["top_alltime"].enabled = false;
       this.homescreen_sections["top_monthly"].enabled = false;
       this.homescreen_sections["top_weekly"].enabled = false;
-      this.homescreen_sections["popular_today"].selectorFunc = ($) => $("div.bsx", $("h2:contains(Yang Lagi Trending!)")?.parent()?.next());
-      this.homescreen_sections["latest_update"].selectorFunc = ($) => $("div.bsx", $("h2:contains(Rilisan Terbaru)")?.parent()?.next());
-      this.homescreen_sections["latest_update"].subtitleSelectorFunc = ($, element) => $("span.fivchap", element).first().text().trim();
     }
   };
   return __toCommonJS(KomikStation_exports);
