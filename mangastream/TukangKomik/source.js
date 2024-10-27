@@ -1447,8 +1447,8 @@ var _Sources = (() => {
   // src/TukangKomik/TukangKomik.ts
   var TukangKomik_exports = {};
   __export(TukangKomik_exports, {
-    Tenshi: () => Tenshi,
-    TenshiInfo: () => TenshiInfo
+    TukangKomik: () => TukangKomik,
+    TukangKomikInfo: () => TukangKomikInfo
   });
   var import_types3 = __toESM(require_lib());
 
@@ -2285,7 +2285,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
 
   // src/TukangKomik/TukangKomik.ts
   var DOMAIN = "https://tukangkomik.co";
-  var TenshiInfo = {
+  var TukangKomikInfo = {
     version: getExportVersion("0.0.1"),
     name: "Tenshi",
     description: `Extension that pulls manga from ${DOMAIN}`,
@@ -2302,7 +2302,7 @@ Please go to the homepage of <${this.baseUrl}> and press the cloud icon.`);
       }
     ]
   };
-  var Tenshi = class extends MangaStream {
+  var TukangKomik = class extends MangaStream {
     constructor() {
       super(...arguments);
       this.baseUrl = DOMAIN;
