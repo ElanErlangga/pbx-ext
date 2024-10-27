@@ -1,0 +1,64 @@
+import {
+    BadgeColor,
+    ContentRating,
+    SourceInfo,
+    SourceIntents
+} from '@paperback/types'
+
+import {
+    getExportVersion,
+    MangaStream
+} from '../MangaStream'
+
+const DOMAIN = 'https://tukangkomik.co'
+
+export const TenshiInfo: SourceInfo = {
+    version: getExportVersion('0.0.1'),
+    name: 'Tenshi',
+    description: `Extension that pulls manga from ${DOMAIN}`,
+    author: 'ElanErlangga',
+    authorWebsite: 'http://github.com/ElanErlangga',
+    icon: 'icon.png',
+    contentRating: ContentRating.EVERYONE,
+    websiteBaseURL: DOMAIN,
+    intents: SourceIntents.MANGA_CHAPTERS | SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.CLOUDFLARE_BYPASS_REQUIRED | SourceIntents.SETTINGS_UI,
+    sourceTags: [
+    {
+        text: "Indonesia",
+        type: BadgeColor.GREY
+    },
+    ]
+}
+
+export class Tenshi extends MangaStream {
+
+    baseUrl: string = DOMAIN
+
+    override directoryPath = 'komik'
+
+    override manga_tag_selector_box = 'div.seriestugenre'
+
+    override configureSections(): void {
+        this.homescreen_sections['new_titles'].enabled = false
+        this.homescreen_sections['top_alltime'].enabled = false
+        this.homescreen_sections['top_monthly'].enabled = false
+        this.homescreen_sections['top_weekly'].enabled = false
+        this.homescreen_sections['popular_today'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Populer Today)')?.parent()?.next())
+        this.homescreen_sections['latest_update'].selectorFunc = ($: CheerioStatic) => $('div.bsx', $('h2:contains(Latest Update)')?.parent()?.next())
+        this.homescreen_sections['latest_update'].subtitleSelectorFunc = ($: CheerioStatic, element: CheerioElement) => $('span.fivchap', element).first().text().trim()
+    }
+    override dateMonths = {
+        january: 'Januari',
+        february: 'Februari',
+        march: 'Maret',
+        april: 'April',
+        may: 'Mei',
+        june: 'Juni',
+        july: 'Juli',
+        august: 'Agustus',
+        september: 'September',
+        october: 'Oktober',
+        november: 'November',
+        december: 'Desember'
+    }
+}
