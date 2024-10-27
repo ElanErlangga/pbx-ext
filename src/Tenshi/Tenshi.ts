@@ -34,8 +34,6 @@ export class Tenshi extends MangaStream {
 
     baseUrl: string = DOMAIN
 
-    override directoryPath = 'komik'
-
     override manga_tag_selector_box = 'div.seriestugenre'
 
     override configureSections(): void {
